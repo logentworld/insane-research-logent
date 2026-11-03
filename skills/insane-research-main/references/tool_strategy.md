@@ -464,7 +464,7 @@ mcp_context7_query_docs(libraryId="/facebook/react", query="useEffect")
 
 ## Agents for Parallel Research (기본 = foreground 배치)
 
-> ⚠️ **Rate-Limit & Reliability Guard** (SKILL.md): throttle to **2-3 concurrent** per batch, verify liveness after spawn (background agents can silently die with no notification → 무산출), and fall back to **main-thread sequential** when reliability matters. Do NOT launch a large `run_in_background=True` fan-out — it trips server-side rate-limits and the agents die.
+> ⚠️ **Rate-Limit & Reliability Guard** (SKILL.md): run **8-10 concurrent** per batch (2026-11-03: 14-day 429 rate ≤0.8%; drop to 5 if a 14-day window exceeds 1%), verify liveness after spawn (background agents can silently die with no notification → 무산출), and fall back to **main-thread sequential** only for the axes that died. Do NOT launch a 16+ `run_in_background=True` fan-out — it trips server-side rate-limits and the agents die.
 
 **기본 예시 — foreground(blocking) 2-3개 배치** (안정 기본값. 경고와 일치):
 

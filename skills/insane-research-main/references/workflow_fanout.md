@@ -6,8 +6,8 @@ Phase 3의 검색 실행을 Claude Code 네이티브 **Workflow 도구**로 수�
 
 | 조건 | 모드 |
 |---|---|
-| 세션 도구 목록에 Workflow가 있음 | **팬아웃 모드** (이 문서) — 폭 5-6 |
-| Workflow 없음 (Pro 미활성·구버전·비활성화) | **배치 모드** — 기존 Rate-Limit Guard(2-3 동시, SKILL.md) |
+| 세션 도구 목록에 Workflow가 있음 | **팬아웃 모드** (이 문서) — 폭 8-10 |
+| Workflow 없음 (Pro 미활성·구버전·비활성화) | **배치 모드** — 기존 Rate-Limit Guard(8-10 동시, SKILL.md) |
 
 판정을 `state.json`에 기록: `"exec_mode": "workflow-fanout" | "agent-batch"`.
 
@@ -107,7 +107,7 @@ Claude Code는 **세션당 WebSearch 200회**(메인+모든 서브에이전트 �
 
 ## 폭·안전 규칙
 
-- 1라운드 폭 5-6, 확장 라운드 폭 ≤6. **한 번에 10 이상 제출 금지**(실측 검증 범위 밖 + 대형 워크플로 경고 임계).
+- 1라운드 폭 8-10, 확장 라운드 폭 ≤10. **한 번에 12 이상 제출 금지**(`workflowSizeGuideline: large` 기준, 2026-11-03 14일 실측 429 ≤0.8%). 14일 창 429가 1%를 넘으면 5-6으로 되돌린다.
 - Workflow 에이전트는 항상 acceptEdits + allowlist 상속 — 장시간 실행 전 allowlist 확인(권한 프롬프트가 실행을 멈출 수 있음).
 - 실패 에이전트는 null로 돌아온다 — `.filter(Boolean)` 후 **누락 축을 반드시 보고**하고, 빠진 축은 배치 모드로 보충한다(조용한 커버리지 구멍 금지).
 - 세션 종료 시 워크플로는 재개 불가(세션 스코프) — 완료 에이전트 캐시는 같은 세션 내 resume에서만 유효.

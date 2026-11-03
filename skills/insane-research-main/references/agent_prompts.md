@@ -74,7 +74,7 @@ Never confirm without sources.
 ## Agent Deployment Pattern
 
 ```python
-# Deploy agents for subtopics using Task tool — THROTTLE to 2-3 concurrent per batch
+# Deploy agents for subtopics using Task tool — batches of 8-10 concurrent (2026-11-03: 14-day 429 rate ≤0.8%)
 # (Rate-Limit & Reliability Guard in SKILL.md): liveness check + sequential fallback
 Task(subagent_type="Explore", prompt="Research current state of [subtopic1]...")
 Task(subagent_type="Explore", prompt="Research challenges in [subtopic2]...")
