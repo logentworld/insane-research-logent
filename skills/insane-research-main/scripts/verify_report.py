@@ -234,7 +234,7 @@ def main():
     p.add_argument(
         "--report",
         action="append",
-        help="검사할 보고서 경로 (반복 지정 가능. 기본: <session>/outputs/*.md)",
+        help="검사할 보고서 경로 (반복 지정 가능. 기본: <session>/outputs/**/*.md)",
     )
     p.add_argument(
         "--min-coverage",
@@ -245,7 +245,7 @@ def main():
     p.add_argument("--state", help="state.json 경로 (기본: <session>/state.json)")
     args = p.parse_args()
 
-    reports = args.report or sorted(glob.glob(os.path.join(args.session, "outputs", "*.md")))
+    reports = args.report or sorted(glob.glob(os.path.join(args.session, "outputs", "**", "*.md"), recursive=True))
     state = args.state or os.path.join(args.session, "state.json")
     sys.exit(verify(args.session, reports, args.min_coverage, state))
 

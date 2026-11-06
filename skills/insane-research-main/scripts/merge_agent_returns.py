@@ -22,7 +22,7 @@ import os
 import sys
 from datetime import datetime, timezone
 
-SEARCH_CAP_DEFAULT = 200  # Claude Code v2.1.212+ 세션당 WebSearch 캡 (전 서브에이전트 합산)
+SEARCH_CAP_DEFAULT = 200  # Claude Code v2.1.212+ 세션당 web_search 캡 (전 서브에이전트 합산)
 
 
 def _norm_url(u):
@@ -187,7 +187,7 @@ def write_outputs(session, m):
         s = m["stats"]
         f.write(
             f"\n합계: 쿼리 {s['queries']}건 (중복 {s['duplicate_queries']}) · "
-            f"WebSearch 호출 {s['total_searches']}건 / 세션 캡 {SEARCH_CAP_DEFAULT}\n"
+            f"web_search 호출 {s['total_searches']}건 / 세션 캡 {SEARCH_CAP_DEFAULT}\n"
         )
 
 
@@ -221,7 +221,7 @@ def main():
         f"leads={s['leads']} queries={s['queries']} (dup {s['duplicate_queries']})",
         file=sys.stderr,
     )
-    print(f"  WebSearch 사용 {s['total_searches']} / 세션 캡 {SEARCH_CAP_DEFAULT}", file=sys.stderr)
+    print(f"  web_search 사용 {s['total_searches']} / 세션 캡 {SEARCH_CAP_DEFAULT}", file=sys.stderr)
     if s["total_searches"] >= SEARCH_CAP_DEFAULT * 0.8:
         print("  ⚠️ 검색 캡 80% 초과 — 이후 검색은 조용히 무시될 수 있음. 확장 라운드 축소 또는 env 상향 검토.", file=sys.stderr)
     for w in m["warnings"]:

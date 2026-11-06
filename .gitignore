@@ -1,5 +1,11 @@
+.gradle/
+.kotlin/
+build/
+local.properties
+*.iml
+.idea/
 .DS_Store
-node_modules/
+captures/
 __pycache__/
-.claude/*.local.md
-.omc/
+*.pyc
+plugin/src/main/assets/

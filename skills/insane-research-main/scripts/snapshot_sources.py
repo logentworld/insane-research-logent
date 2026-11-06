@@ -2,7 +2,7 @@
 """snapshot_sources.py — 고위험 주장이 인용한 출처의 원문을 저장한다 (v2.10.0).
 
 validate_ledger.py의 원문 인용 게이트(7c~7e)가 evidence 구절을 대조할 원문을 만든다.
-WebFetch는 모델이 요약한 글을 돌려주므로 원문 대조에 쓸 수 없다 — insane-search
+web_fetch는 모델이 요약한 글을 돌려주므로 원문 대조에 쓸 수 없다 — insane-search
 엔진으로 직접 받는다.
 
 입력:  <session>/artifacts/claim_ledger.jsonl, <session>/sources/sources.jsonl
@@ -40,6 +40,10 @@ def _find_engine_dir(explicit):
     env = os.environ.get("INSANE_SEARCH_ENGINE_DIR")
     if env:
         return env
+    for candidate in ("~/.logent/plugins/insane-search/engine", "~/.logent/plugins/insane-search"):
+        path = os.path.expanduser(candidate)
+        if os.path.isfile(os.path.join(path, "__main__.py")) or os.path.isdir(os.path.join(path, "engine")):
+            return path
     pattern = os.path.expanduser("~/.claude/plugins/cache/*/insane-search/*/skills/insane-search")
     found = sorted(glob.glob(pattern), key=lambda p: [int(x) if x.isdigit() else -1
                                                       for x in p.split("/")[-3].split(".")])
@@ -47,9 +51,15 @@ def _find_engine_dir(explicit):
 
 
 def _load_fetch(engine_dir):
-    if not engine_dir or not os.path.isdir(os.path.join(engine_dir, "engine")):
+    root = None
+    if engine_dir and os.path.isdir(engine_dir):
+        if os.path.isfile(os.path.join(engine_dir, "__main__.py")):
+            root = os.path.dirname(engine_dir)
+        elif os.path.isdir(os.path.join(engine_dir, "engine")):
+            root = engine_dir
+    if root is None:
         return None
-    sys.path.insert(0, engine_dir)
+    sys.path.insert(0, root)
     try:
         from engine import fetch  # type: ignore  # noqa: E402
     except Exception as e:  # pragma: no cover - 환경 문제 보고용
@@ -89,7 +99,7 @@ def snapshot(session, fetch, max_bytes=MAX_BYTES_DEFAULT, timeout=25):
         rel = f"sources/snapshots/{sid}.txt"
         rec: dict = {"path": rel, "fetched_at": datetime.now(timezone.utc).isoformat()}
         try:
-            r = fetch(src["url"], timeout=timeout)
+            r = fetch(src["url"], timeout=timeout, enable_playwright=False)
             text = getattr(r, "content", "") or ""
             rec["via"] = getattr(r, "extraction_source", "") or getattr(r, "verdict", "") or ""
             if not getattr(r, "ok", False) or not text.strip():

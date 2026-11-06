@@ -393,6 +393,48 @@ def list_research_sessions(base_path: str = "RESEARCH") -> List[Dict]:
     return orchestrator.list_sessions()
 
 
+def _logent_cli() -> int:
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(description="insane-research 세션 상태 헬퍼")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    init = sub.add_parser("init", help="새 리서치 세션을 만들어요.")
+    init.add_argument("--topic", required=True)
+    init.add_argument("--base", default="RESEARCH")
+
+    resume = sub.add_parser("resume", help="중단된 세션 상태를 다시 읽어요.")
+    resume.add_argument("--session", required=True)
+    resume.add_argument("--base", default="RESEARCH")
+
+    status = sub.add_parser("status", help="세션 상태 또는 전체 목록을 보여 줘요.")
+    status.add_argument("--session")
+    status.add_argument("--base", default="RESEARCH")
+
+    listing = sub.add_parser("list", help="모든 리서치 세션을 보여 줘요.")
+    listing.add_argument("--base", default="RESEARCH")
+
+    args = parser.parse_args()
+    try:
+        if args.command == "init":
+            result = init_research(args.topic, args.base)
+        elif args.command == "resume":
+            result = resume_research(args.session, args.base)
+        elif args.command == "status":
+            result = (
+                get_research_status(args.session, args.base)
+                if args.session
+                else {"sessions": list_research_sessions(args.base)}
+            )
+        else:
+            result = {"sessions": list_research_sessions(args.base)}
+    except Exception as exc:
+        print(json.dumps({"ok": False, "error": f"{type(exc).__name__}: {exc}"}, ensure_ascii=False))
+        return 1
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0
+
+
 if __name__ == "__main__":
-    result = init_research("AI Detection Technologies 2025")
-    print(json.dumps(result, indent=2))
+    raise SystemExit(_logent_cli())

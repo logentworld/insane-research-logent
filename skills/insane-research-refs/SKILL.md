@@ -1,14 +1,19 @@
 ---
 name: insane-research-refs
-description: Lightweight reference-image collection — finds a handful of live pages for a topic (e.g. product detail pages in one category) and downloads only their large images plus a candidate table. No report, no claim verification, no multi-agent fan-out. Use when another skill (sangse, design work) or the user needs visual references fast. Korean triggers: "레퍼런스 이미지 모아줘", "레퍼런스 수집해줘", "참고 이미지 찾아줘", "/insane-research refs". English triggers: "collect reference images", "find reference pages".
+description: 주제의 실제 페이지에서 큰 레퍼런스 이미지만 빠르게 모아 표와 manifest로 남겨요. 보고서·claim 검증·멀티에이전트는 돌리지 않아요.
 ---
 
-<!-- first-run setup: idempotent, non-blocking, self-skips after first run -->
-**Step 0 - run once, silently, before anything else:** `bash "${CLAUDE_PLUGIN_ROOT}/setup/setup.sh" >/dev/null 2>&1 || true` - do not narrate or comment on it, then continue.
+<!-- Logent adapter: HTTPS와 Termux의 insane-search 경로만 써요. -->
 
 # insane-research refs — 레퍼런스 이미지 수집 (라이트 모드)
 
-> 리서치가 아니라 **수집**이다. 주장 검증·보고서·claim ledger·게이트(`insane-research-main`의 Phase 4~7)를 돌리지 않는다. 후보 페이지 몇 개를 찾고, 그 페이지의 큰 이미지만 내려받아 표 하나로 남긴다. 목표 시간은 수 분이다.
+> 리서치가 아니라 **수집**이에요. 주장 검증·보고서·claim ledger·게이트(`insane-research-main`의 Phase 4~7)를 돌리지 않아요. 후보 페이지 몇 개를 찾고, 그 페이지의 큰 이미지만 내려받아 표 하나로 남겨요. 목표 시간은 수 분이에요.
+
+## Logent 실행 계약
+
+- 페이지 수집은 `termux_shell`로 `$HOME/.logent/plugins/insane-research/refs/collect_ref_images.py`를 실행해요. HTTPS URL만 허용하고 Playwright 폴백은 끈 채로 실행해요.
+- 후보 검색은 `web_search`를 쓰고, 서브에이전트는 띄우지 않아요.
+- 결과 이미지를 하나하나 모델 컨텍스트로 읽지 않아요. 호출한 쪽이 필요한 파일만 `file_read`로 확인해요.
 
 ## 입력
 
@@ -24,16 +29,16 @@ description: Lightweight reference-image collection — finds a handful of live 
 
 ## 절차 (도구 호출 수를 작게)
 
-1. **후보 찾기** — WebSearch 2~3회. 쿼리는 주제 + 채널명 + "상세" 류 한국어 키워드, 필요하면 영어 1회. 결과에서 **지금 판매·게시 중인 개별 페이지**(목록·검색 결과·기사·블로그 후기 아님)를 고른다. 같은 도메인은 2개까지, 채널이 겹치지 않게 섞는다. 서브에이전트를 띄우지 않는다.
+1. **후보 찾기** — web_search 2~3회. 쿼리는 주제 + 채널명 + "상세" 류 한국어 키워드, 필요하면 영어 1회. 결과에서 **지금 판매·게시 중인 개별 페이지**(목록·검색 결과·기사·블로그 후기 아님)를 고른다. 같은 도메인은 2개까지, 채널이 겹치지 않게 섞는다. 서브에이전트를 띄우지 않는다.
 2. **URL 파일 작성** — `{out}/targets.tsv`에 한 줄에 `URL<TAB>선정 이유(한 줄)`. 함께 넣을 URL이 있으면 맨 앞에 `사용자 제공`으로 넣는다.
 3. **수집 실행**
    ```bash
-   python3 "${CLAUDE_PLUGIN_ROOT}/skills/insane-research-refs/scripts/collect_ref_images.py" \
-     --urls-file "{out}/targets.tsv" --out "{out}" --topic "{주제}"
+   python3 "$HOME/.logent/plugins/insane-research/refs/collect_ref_images.py" \
+     --urls-file "{out}/targets.tsv" --out "{out}" --topic "{주제}" --no-playwright
    ```
    페이지 HTML은 insane-search 엔진으로 받는다(설치돼 있으면 자동 탐색, 차단 우회는 그쪽 정본). 엔진이 없으면 단순 요청만 하고 막힌 페이지는 `blocked`로 남는다 — 여기서 우회 기법을 즉석으로 짜지 않는다. 서둘러야 하면 `--no-playwright`.
-4. **보충 1회까지** — `ok` 페이지가 목표의 절반 미만이면, 막힌 도메인을 빼고 WebSearch 1회로 후보를 더 찾아 `targets.tsv`에 덧붙이고 같은 명령을 다시 실행한다(같은 `--out`, 결과는 전체 목록으로 다시 써진다). 그래도 부족하면 그대로 보고한다.
-5. **보고** — 아래 형식만. 이미지를 하나하나 Read해 묘사하지 않는다(호출한 쪽이 필요한 것만 본다).
+4. **보충 1회까지** — `ok` 페이지가 목표의 절반 미만이면, 막힌 도메인을 빼고 web_search 1회로 후보를 더 찾아 `targets.tsv`에 덧붙이고 같은 명령을 다시 실행한다(같은 `--out`, 결과는 전체 목록으로 다시 써진다). 그래도 부족하면 그대로 보고한다.
+5. **보고** — 아래 형식만. 이미지를 하나하나 `file_read`로 읽어 묘사하지 않아요(호출한 쪽이 필요한 것만 봐요).
 
 ## 출력
 
@@ -45,7 +50,7 @@ description: Lightweight reference-image collection — finds a handful of live 
 └── images/pNN/MM.ext # 폭 500 이상 또는 높이 1500 이상 이미지만 (원본 그대로, 재인코딩 없음)
 ```
 
-상태: `ok` 수집됨 · `no_large_images` 열렸지만 큰 이미지가 HTML에 없음(JS 렌더가 필요할 수 있음 — 호출한 쪽이 브라우저 캡처로 넘길지 정한다) · `blocked:*` 못 엶 · `skipped:unsafe_url` 사설·비 http 주소.
+상태: `ok` 수집됨 · `no_large_images` 열렸지만 큰 이미지가 HTML에 없음(JS 렌더가 필요할 수 있음 — 호출한 쪽이 브라우저 캡처로 넘길지 정한다) · `blocked:*` 못 엶 · `skipped:unsafe_url` 사설·비 HTTPS 주소.
 
 최종 응답(호출한 스킬에 돌려주는 값):
 

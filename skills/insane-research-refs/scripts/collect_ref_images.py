@@ -47,6 +47,10 @@ def _find_engine_dir(explicit):
     env = os.environ.get("INSANE_SEARCH_ENGINE_DIR")
     if env:
         return env
+    for candidate in ("~/.logent/plugins/insane-search/engine", "~/.logent/plugins/insane-search"):
+        path = os.path.expanduser(candidate)
+        if os.path.isfile(os.path.join(path, "__main__.py")) or os.path.isdir(os.path.join(path, "engine")):
+            return path
     pattern = os.path.expanduser("~/.claude/plugins/cache/*/insane-search/*/skills/insane-search")
     found = sorted(glob.glob(pattern), key=lambda p: [int(x) if x.isdigit() else -1
                                                       for x in p.split("/")[-3].split(".")])
@@ -54,9 +58,15 @@ def _find_engine_dir(explicit):
 
 
 def _load_fetch(engine_dir):
-    if not engine_dir or not os.path.isdir(os.path.join(engine_dir, "engine")):
+    root = None
+    if engine_dir and os.path.isdir(engine_dir):
+        if os.path.isfile(os.path.join(engine_dir, "__main__.py")):
+            root = os.path.dirname(engine_dir)
+        elif os.path.isdir(os.path.join(engine_dir, "engine")):
+            root = engine_dir
+    if root is None:
         return None
-    sys.path.insert(0, engine_dir)
+    sys.path.insert(0, root)
     try:
         from engine import fetch  # type: ignore  # noqa: E402
     except Exception as e:  # pragma: no cover - 환경 문제 보고용
@@ -68,12 +78,12 @@ def _load_fetch(engine_dir):
 # ── 안전 ─────────────────────────────────────────────────────────────
 
 def is_safe_url(url):
-    """http(s)이고 사설·루프백 주소로 풀리지 않는 URL만 허용한다."""
+    """Logent 정책에 맞춰 HTTPS이고 사설·루프백 주소로 풀리지 않는 URL만 허용한다."""
     try:
         p = urllib.parse.urlsplit(url)
     except ValueError:
         return False
-    if p.scheme not in ("http", "https") or not p.hostname:
+    if p.scheme != "https" or not p.hostname:
         return False
     try:
         infos = socket.getaddrinfo(p.hostname, None)

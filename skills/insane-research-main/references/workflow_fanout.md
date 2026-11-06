@@ -1,13 +1,17 @@
 # Workflow 팬아웃 모드 (Phase 3 실행부 — v2.8)
 
+> **Logent에서는 이 문서를 실행 모드로 쓰지 않아요.** Workflow 도구가 없으므로
+> `SKILL.md`의 Logent 배치 모드(`subagent` 3개씩, 총 6개, 각 8분)를 써요.
+> 이 문서는 `artifacts/agent_returns.json`의 반환 스키마를 확인할 때만 참고해요.
+
 Phase 3의 검색 실행을 Claude Code 네이티브 **Workflow 도구**로 수행하는 모드. 실측 근거(2026-07-23): 6폭 버스트 6/6 무사고(3.8s), 리서치형(웹검색 수행) 5폭 5/5 무사고(16s). 공식 문서상 동시 16캡·런당 1,000 에이전트이며, 구독 플랜에 "동시 에이전트 수" 제한은 문서화돼 있지 않다(사용량 윈도우만 존재).
 
 ## 모드 선택 (Phase 3 진입 시 1회)
 
 | 조건 | 모드 |
 |---|---|
-| 세션 도구 목록에 Workflow가 있음 | **팬아웃 모드** (이 문서) — 폭 8-10 |
-| Workflow 없음 (Pro 미활성·구버전·비활성화) | **배치 모드** — 기존 Rate-Limit Guard(8-10 동시, SKILL.md) |
+| 세션 도구 목록에 Workflow가 있음 | **팬아웃 모드** (이 문서) — 폭 3 |
+| Workflow 없음 (Pro 미활성·구버전·비활성화) | **배치 모드** — 기존 Rate-Limit Guard(3 동시, SKILL.md) |
 
 판정을 `state.json`에 기록: `"exec_mode": "workflow-fanout" | "agent-batch"`.
 
@@ -54,7 +58,7 @@ Phase 3의 검색 실행을 Claude Code 네이티브 **Workflow 도구**로 수�
 
 ## 스크립트 템플릿 (주제·축에 맞춰 즉석 변형)
 
-에이전트 프롬프트에는 기존 계약 전부를 포함한다: 예산 해제문·완료 정의·검색 크래프트(8-10 쿼리)·insane-search 위임(**비동기 기본 — 백그라운드 시작·빠른 수거·반환 전 전량 수거**, tool_strategy.md §비동기 위임)·R8·**검색 예산**(아래). `{...}` 슬롯을 채워 사용.
+에이전트 프롬프트에는 기존 계약 전부를 포함한다: 예산 해제문·완료 정의·검색 크래프트(3 쿼리)·insane-search 위임(**비동기 기본 — 백그라운드 시작·빠른 수거·반환 전 전량 수거**, tool_strategy.md §비동기 위임)·R8·**검색 예산**(아래). `{...}` 슬롯을 채워 사용.
 
 ```javascript
 export const meta = {
@@ -92,13 +96,13 @@ return { returns: [...wave1, ...wave2], leads_total: leads.length }
 # 1) 반환 배열을 세션에 저장 (Workflow result의 returns 필드)
 #    → <session>/artifacts/agent_returns.json
 # 2) 결정론 취합 — sources.jsonl / claim_ledger.jsonl / expansion_log.md / query_log.md 생성
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/insane-research-main/scripts/merge_agent_returns.py" --session "<session>"
+python3 "$HOME/.logent/plugins/insane-research/scripts/merge_agent_returns.py" --session "<session>"
 # 3) 이후는 기존 파이프라인 그대로: 부족 주장 보강 → validate_ledger.py → 합성 → verify_report.py → eval_report.py
 ```
 
 ## 검색 예산 회계 (⚠️ 필수 — 세션 200캡 대응)
 
-Claude Code는 **세션당 WebSearch 200회**(메인+모든 서브에이전트 합산)를 캡하며, 초과분은 에러가 아니라 **조용한 빈 검색**이 된다(v2.1.212+). 규칙:
+Claude Code는 **세션당 web_search 200회**(메인+모든 서브에이전트 합산)를 캡하며, 초과분은 에러가 아니라 **조용한 빈 검색**이 된다(v2.1.212+). 규칙:
 
 1. Phase 2에서 축당 검색 예산을 배분해 각 에이전트 프롬프트에 명시한다 (권장: 1라운드 축당 10회, 확장 에이전트 4회 — 축 5개+확장 6개 ≈ 74회).
 2. 에이전트는 `search_count`를 반환하고, merge_agent_returns.py가 합산해 80% 초과 시 경고한다.
@@ -107,7 +111,7 @@ Claude Code는 **세션당 WebSearch 200회**(메인+모든 서브에이전트 �
 
 ## 폭·안전 규칙
 
-- 1라운드 폭 8-10, 확장 라운드 폭 ≤10. **한 번에 12 이상 제출 금지**(`workflowSizeGuideline: large` 기준, 2026-11-03 14일 실측 429 ≤0.8%). 14일 창 429가 1%를 넘으면 5-6으로 되돌린다.
+- 1라운드 폭 3, 확장 라운드 폭 ≤10. **한 번에 12 이상 제출 금지**(`workflowSizeGuideline: large` 기준, 2026-11-03 14일 실측 429 ≤0.8%). 14일 창 429가 1%를 넘으면 5-6으로 되돌린다.
 - Workflow 에이전트는 항상 acceptEdits + allowlist 상속 — 장시간 실행 전 allowlist 확인(권한 프롬프트가 실행을 멈출 수 있음).
 - 실패 에이전트는 null로 돌아온다 — `.filter(Boolean)` 후 **누락 축을 반드시 보고**하고, 빠진 축은 배치 모드로 보충한다(조용한 커버리지 구멍 금지).
 - 세션 종료 시 워크플로는 재개 불가(세션 스코프) — 완료 에이전트 캐시는 같은 세션 내 resume에서만 유효.
