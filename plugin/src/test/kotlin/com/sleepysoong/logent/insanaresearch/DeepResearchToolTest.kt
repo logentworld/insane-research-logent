@@ -68,6 +68,16 @@ class DeepResearchToolTest {
             """{"action":"delete","session":"topic_1"}""",
             """{"action":"start","topic":"t","session":"topic_1"}""",
             """{"action":"start","topic":"t","extra":true}""",
+            """{"action":"status","browser_manifest":"browser.json"}""",
+            """{"action":"snapshot","session":"topic_1","browser_manifest":null}""",
+            """{"action":"snapshot","session":"topic_1","browser_manifest":true}""",
+            """{"action":"snapshot","session":"topic_1","browser_manifest":""}""",
+            """{"action":"snapshot","session":"topic_1","browser_manifest":"/tmp/browser.json"}""",
+            """{"action":"snapshot","session":"topic_1","browser_manifest":"../browser.json"}""",
+            """{"action":"snapshot","session":"topic_1","browser_manifest":"sources/../browser.json"}""",
+            """{"action":"snapshot","session":"topic_1","browser_manifest":"sources//browser.json"}""",
+            """{"action":"snapshot","session":"topic_1","browser_manifest":"sources\\browser.json"}""",
+            """{"action":"snapshot","session":"topic_1","browser_manifest":"browser.txt"}""",
         )) {
             assertTrue(bad, plugin.run(args(bad)).isError)
         }
@@ -112,7 +122,7 @@ class DeepResearchToolTest {
     }
 
     @Test
-    fun `snapshot은 insane-search 엔진 경로를 넘겨요`() = runBlocking {
+    fun `snapshot은 manifest 없이 HTTP 수집 결과를 그대로 돌려줘요`() = runBlocking {
         val (plugin, host) = plugin { command ->
             if (deployment(command)) {
                 Result.success(ProcessResult(0, "INSANE_RESEARCH_DEPLOYED", false))
@@ -128,25 +138,44 @@ class DeepResearchToolTest {
         assertTrue(command.contains("snapshot_sources.py"))
         assertTrue(command.contains("--session 'RESEARCH/topic_1'"))
         assertTrue(command.contains("--engine-dir \"\$HOME/.logent/plugins/insane-search/engine\""))
-        assertTrue(command.contains("if [ ! -f \"\$HOME/.logent/plugins/insane-search/engine/__main__.py\" ]"))
+        assertFalse(command.contains("INSANE_SEARCH_ENGINE_MISSING"))
+        assertFalse(command.contains("--browser-manifest"))
         assertEquals(600, host.timeouts.last())
     }
 
     @Test
-    fun `snapshot에 엔진이 없으면 명확한 오류를 돌려줘요`() = runBlocking {
+    fun `snapshot CLI 실패는 원인과 종료 코드를 보존해요`() = runBlocking {
         val (plugin, _) = plugin { command ->
             if (deployment(command)) {
                 Result.success(ProcessResult(0, "INSANE_RESEARCH_DEPLOYED", false))
             } else {
-                Result.success(ProcessResult(78, "INSANE_SEARCH_ENGINE_MISSING", false))
+                Result.success(ProcessResult(1, "원문이 부족해요: S1", false))
             }
         }
 
         val result = plugin.run(args("""{"action":"snapshot","session":"topic_1"}"""))
 
         assertTrue(result.isError)
-        assertTrue(result.text.contains("insane-search 엔진이"))
-        assertTrue(result.text.contains("~/.logent/plugins/insane-search/engine"))
+        assertTrue(result.text.contains("원문이 부족해요: S1"))
+        assertTrue(result.text.contains("종료 코드: 1"))
+    }
+
+    @Test
+    fun `snapshot은 브라우저 manifest를 셸 인용하고 엔진 사전 검사 없이 실행해요`() = runBlocking {
+        val (plugin, host) = plugin { command ->
+            if (deployment(command)) {
+                Result.success(ProcessResult(0, "INSANE_RESEARCH_DEPLOYED", false))
+            } else {
+                Result.success(ProcessResult(0, "브라우저 원문을 저장했어요", false))
+            }
+        }
+
+        val result = plugin.run(args("""{"action":"snapshot","session":"topic_1","browser_manifest":"sources/browser ; $(touch 위험).json"}"""))
+
+        assertFalse(result.text, result.isError)
+        assertTrue(result.text.contains("브라우저 원문을 저장했어요"))
+        assertTrue(host.commands.last().contains("--browser-manifest 'sources/browser ; \$(touch 위험).json'"))
+        assertFalse(host.commands.last().contains("INSANE_SEARCH_ENGINE_MISSING"))
     }
 
     @Test

@@ -32,7 +32,8 @@ class InsaneResearchPluginTest {
             parameters["required"]!!.jsonArray.map { it.jsonPrimitive.content },
         )
         val properties = parameters["properties"]!!.jsonObject
-        assertEquals(setOf("action", "topic", "session"), properties.keys)
+        assertEquals(setOf("action", "topic", "session", "browser_manifest"), properties.keys)
+        assertEquals("string", properties["browser_manifest"]!!.jsonObject["type"]!!.jsonPrimitive.content)
         assertEquals(
             listOf("start", "status", "resume", "merge", "snapshot", "validate", "verify", "eval"),
             properties["action"]!!.jsonObject["enum"]!!.jsonArray.map { it.jsonPrimitive.content },

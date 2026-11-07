@@ -46,6 +46,7 @@ class R:
 
 def fake_fetch(url, **kw):
     assert kw["enable_markdown"] is False and kw["enable_extraction"] is False
+    assert kw["enable_playwright"] is False
     if url == "https://a.com/p/1":
         return R(True, PAGE_A, url)
     if url == "https://b.com/p/2":
@@ -128,3 +129,54 @@ def test_skips_template_placeholders_and_quotes_korean_path():
     assert not any("{" in u or "$" in u for u in urls)
     assert "https://shop.kr/%EC%9D%B4%EB%AF%B8%EC%A7%80/%EC%83%81%EC%84%B8.jpg" in urls
     assert "https://x.com/a.png" in urls
+
+
+def test_browser_pages_reuses_image_collection(tmp_path, monkeypatch):
+    monkeypatch.setattr(cri, "is_safe_url", lambda u: u.startswith("https://"))
+    (tmp_path / "page.html").write_text(PAGE_A, encoding="utf-8")
+    manifest = tmp_path / "browser.json"
+    manifest.write_text(json.dumps({"pages": [{
+        "url": "https://a.com/p/1", "final_url": "https://a.com/p/1",
+        "html_path": "page.html", "image_urls": ["https://cdn.a.com/long.jpg"]
+    }]}), encoding="utf-8")
+    def forbidden_fetch(*args, **kwargs):
+        raise AssertionError("브라우저 페이지는 엔진으로 다시 받지 않아야 해요")
+    out = tmp_path / "out"
+    assert cri.main(["--browser-pages", str(manifest), "--out", str(out)],
+                    downloader=fake_download, fetch=forbidden_fetch) == 0
+    page = json.loads((out / "manifest.json").read_text())["pages"][0]
+    assert page["via"] == "browser_use"
+    assert page["final_url"] == "https://a.com/p/1"
+    assert len(page["images"]) == 4
+    assert (out / page["images"][0]["file"]).read_bytes() == IMAGES[page["images"][0]["src"]]
+
+
+def test_browser_image_urls_without_html(tmp_path, monkeypatch):
+    monkeypatch.setattr(cri, "is_safe_url", lambda u: u.startswith("https://"))
+    manifest = tmp_path / "browser.json"
+    manifest.write_text(json.dumps({"pages": [{
+        "url": "https://a.com/p/1", "final_url": "https://a.com/final",
+        "image_urls": ["https://cdn.a.com/long.jpg"]
+    }]}), encoding="utf-8")
+    assert cri.main(["--browser-pages", str(manifest), "--out", str(tmp_path / "out")],
+                    downloader=fake_download, fetch=fake_fetch) == 0
+
+
+def test_browser_manifest_rejects_path_escape_and_unsafe_urls(tmp_path, monkeypatch):
+    import pytest
+    monkeypatch.setattr(cri, "is_safe_url", lambda u: u.startswith("https://public.example/"))
+    manifest = tmp_path / "browser.json"
+    base = {"url": "https://public.example/page", "final_url": "https://public.example/final"}
+    for extra in ({"html_path": "../outside.html"},
+                  {"image_urls": ["http://127.0.0.1/image.png"]},
+                  {"image_urls": []}):
+        manifest.write_text(json.dumps({"pages": [{**base, **extra}]}), encoding="utf-8")
+        with pytest.raises(ValueError):
+            cri.read_browser_pages(str(manifest))
+
+
+def test_fetch_disables_playwright_even_when_flag_is_false():
+    def fetch(url, **kwargs):
+        assert kwargs["enable_playwright"] is False
+        return R(True, PAGE_A, url)
+    assert cri.fetch_html("https://a.com/p/1", fetch, 20, False)[0] == PAGE_A

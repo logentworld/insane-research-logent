@@ -9,6 +9,7 @@ import com.sleepysoong.logent.plugin.text
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * insane-research의 세션 상태와 결정론적 검증 게이트를 Termux에서 실행해요.
@@ -37,12 +38,6 @@ internal class DeepResearchTool(private val runtime: ResearchRuntime) {
 
         val command = buildString {
             append("source \"\$HOME/.logent/env\" 2>/dev/null || true\n")
-            if (action == "snapshot") {
-                append("if [ ! -f \"\$HOME/.logent/plugins/insane-search/engine/__main__.py\" ]; then\n")
-                append("  echo \"INSANE_SEARCH_ENGINE_MISSING\"\n")
-                append("  exit 78\n")
-                append("fi\n")
-            }
             if (session != null && action != "start") {
                 append("test -f ")
                 append(shellQuote("RESEARCH/$session/state.json"))
@@ -69,6 +64,9 @@ internal class DeepResearchTool(private val runtime: ResearchRuntime) {
                 "snapshot" -> {
                     append(" --session ").append(shellQuote("RESEARCH/${session.orEmpty()}"))
                     append(" --engine-dir \"\$HOME/.logent/plugins/insane-search/engine\"")
+                    arguments.text("browser_manifest")?.let {
+                        append(" --browser-manifest ").append(shellQuote(it))
+                    }
                 }
                 "validate", "verify", "eval" -> {
                     append(" --session ").append(shellQuote("RESEARCH/${session.orEmpty()}"))
@@ -79,15 +77,6 @@ internal class DeepResearchTool(private val runtime: ResearchRuntime) {
         val execution = runtime.execute(command, timeout).getOrElse { error ->
             return@withLock ToolResult(
                 "deep_research 실행 결과를 확인하지 못했어요: ${error.message}",
-                isError = true,
-            )
-        }
-        if (action == "snapshot" && execution.exitCode == 78 &&
-            execution.output.contains("INSANE_SEARCH_ENGINE_MISSING")
-        ) {
-            return@withLock ToolResult(
-                "insane-search 엔진이 ~/.logent/plugins/insane-search/engine에 없어요. " +
-                    "insane-search 플러그인을 먼저 설치·준비한 뒤 snapshot을 다시 실행하세요.",
                 isError = true,
             )
         }
@@ -134,6 +123,18 @@ internal class DeepResearchTool(private val runtime: ResearchRuntime) {
         val action = arguments.text("action")?.trim()
             ?: return "action이 필요해요."
         if (action !in ACTIONS) return "지원하지 않는 deep_research action이에요: $action"
+        if ("browser_manifest" in arguments) {
+            if (action != "snapshot") return "browser_manifest는 snapshot에서만 쓸 수 있어요."
+            val value = arguments["browser_manifest"] as? JsonPrimitive
+            val path = value?.takeIf { it.isString }?.content
+                ?: return "browser_manifest는 세션 기준 JSON 상대 경로 문자열이어야 해요."
+            if (path.isBlank() || path.startsWith('/') || '\\' in path || ':' in path ||
+                path.any { it.isISOControl() } || !path.endsWith(".json") ||
+                path.split('/').any { it.isEmpty() || it == "." || it == ".." }
+            ) {
+                return "browser_manifest는 세션 안의 JSON 상대 경로여야 해요. 절대 경로와 경로 이탈은 허용하지 않아요."
+            }
+        }
         val topic = arguments.text("topic")?.trim()
         val session = arguments.text("session")?.trim()?.takeIf { it.isNotEmpty() }
         if (action == "start") {
@@ -153,7 +154,7 @@ internal class DeepResearchTool(private val runtime: ResearchRuntime) {
     private companion object {
         const val MAX_TOOL_TEXT = 26_000
         val ACTIONS = setOf("start", "status", "resume", "merge", "snapshot", "validate", "verify", "eval")
-        val ALLOWED_ARGS = setOf("action", "topic", "session")
+        val ALLOWED_ARGS = setOf("action", "topic", "session", "browser_manifest")
         // orchestrator는 한글 주제를 그대로 세션 이름에 쓰므로 유니코드 문자·숫자를 허용해요.
         val SESSION = Regex("[\\p{L}\\p{N}][\\p{L}\\p{N}._-]{0,119}")
     }

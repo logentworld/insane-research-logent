@@ -13,6 +13,7 @@ esac
 if [[ "$mode" != jvm ]]; then
     command -v python3 >/dev/null || { echo "Python 3이 필요해요." >&2; exit 1; }
     python3 -m unittest discover -s tests/python -p 'test_*.py'
+    python3 -m pytest -q tests/test_snapshot_sources.py tests/test_collect_ref_images.py
 fi
 if [[ "$mode" != python ]]; then
     ./scripts/gradle.sh :plugin:testDebugUnitTest :plugin:lintRelease "$@"

@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""레퍼런스 이미지 수집기 — 후보 페이지 URL에서 큰 이미지만 내려받아 목록을 남긴다.
+"""레퍼런스 이미지 수집기예요. 후보 페이지의 큰 이미지를 저장해요.
 
-리서치(주장 검증·보고서)가 아니라 "참고용 이미지 모으기"만 한다. 페이지 HTML은 insane-search
-엔진으로 받는다(차단 우회는 그쪽 정본). 엔진이 없으면 단순 요청(curl, 없으면 urllib)만 하고, 막힌
-페이지는 blocked로 기록한다 — 우회 기법을 여기에 다시 구현하지 않는다.
+리서치 보고서가 아니라 참고용 이미지 수집만 수행해요. 페이지 HTML은 선택적
+insane-search HTTP 전용 엔진이나 curl/urllib로 받아요. browser_use가 직접 저장한
+HTML·공개 이미지 URL은 --browser-pages JSON으로 기존 다운로드 경로에 연결해요.
+로컬 Playwright는 옵션을 생략해도 항상 꺼요.
 
-입력: URL 인자 또는 --urls-file(한 줄에 `URL<TAB>선정 이유`).
-출력(--out): images/pNN/MM.ext, manifest.json, candidates.md
-엔진 위치: --engine-dir > $INSANE_SEARCH_ENGINE_DIR > 플러그인 캐시 최신 버전 탐색.
-표준 라이브러리만 쓴다.
+입력은 URL 인자, --urls-file 또는 --browser-pages예요.
+출력은 images/pNN/MM.ext, manifest.json, candidates.md예요.
+엔진 위치는 --engine-dir, 환경 변수, 플러그인 캐시 순서로 찾아요.
+표준 라이브러리만 사용해요.
 """
 
 import argparse
@@ -148,7 +149,7 @@ def fetch_html(url, fetch, timeout, no_playwright):
     """(html, final_url, via) 또는 (None, url, 사유)."""
     if fetch is not None:
         try:
-            res = fetch(url, timeout=timeout, max_attempts=8, enable_playwright=not no_playwright,
+            res = fetch(url, timeout=timeout, max_attempts=8, enable_playwright=False,
                         enable_extraction=False, enable_markdown=False)
             if getattr(res, "ok", False) and getattr(res, "content", ""):
                 return res.content, getattr(res, "final_url", "") or url, "insane-search"
@@ -281,13 +282,20 @@ def collect_page(idx, url, note, out_dir, fetch, opts, downloader):
     if not is_safe_url(url):
         rec["status"] = "skipped:unsafe_url"
         return rec
-    page, final, via = fetch_html(url, fetch, opts.timeout, opts.no_playwright)
+    browser_page = getattr(opts, "browser_pages", {}).get(url)
+    if browser_page is not None:
+        page, final, via = browser_page["html"], browser_page["final_url"], "browser_use"
+    else:
+        page, final, via = fetch_html(url, fetch, opts.timeout, opts.no_playwright)
     rec["via"] = via
     if page is None:
         rec["status"] = via
         return rec
     rec["title"] = extract_title(page)
     cands = extract_image_urls(page, final)
+    if browser_page is not None:
+        cands = list(dict.fromkeys(cands + browser_page["image_urls"]))
+    rec["final_url"] = final
     rec["found"] = len(cands)
     pdir = os.path.join(out_dir, "images", f"p{idx:02d}")
     tried = 0
@@ -358,6 +366,44 @@ def read_targets(args):
     return dedup
 
 
+def read_browser_pages(path):
+    """browser_use가 저장한 HTML과 공개 이미지 URL을 읽어요."""
+    if not path:
+        return {}
+    from pathlib import Path
+    manifest = Path(path).resolve()
+    data = json.loads(manifest.read_text(encoding="utf-8"))
+    if not isinstance(data, dict) or not isinstance(data.get("pages"), list):
+        raise ValueError("브라우저 입력에는 pages 배열이 필요해요")
+    pages = {}
+    for row in data["pages"]:
+        if not isinstance(row, dict):
+            raise ValueError("브라우저 페이지는 객체여야 해요")
+        url, final = row.get("url"), row.get("final_url")
+        images = row.get("image_urls", [])
+        if not isinstance(url, str) or not isinstance(final, str) or not is_safe_url(url) or not is_safe_url(final):
+            raise ValueError("원본·최종 URL은 공개 HTTPS여야 해요")
+        if url in pages or not isinstance(images, list) or any(not isinstance(u, str) or not is_safe_url(u) for u in images):
+            raise ValueError("중복 페이지나 공개 HTTPS가 아닌 이미지 URL은 사용할 수 없어요")
+        page = ""
+        if "html_path" in row:
+            relative = row["html_path"]
+            if not isinstance(relative, str) or Path(relative).is_absolute():
+                raise ValueError("html_path는 manifest 기준 상대 경로여야 해요")
+            source = (manifest.parent / relative).resolve()
+            if not source.is_relative_to(manifest.parent):
+                raise ValueError("HTML 파일은 manifest 폴더 안에 있어야 해요")
+            with source.open("rb") as stream:
+                raw = stream.read(MAX_HTML_BYTES + 1)
+            if len(raw) > MAX_HTML_BYTES:
+                raise ValueError("HTML 파일은 8 MiB 이하여야 해요")
+            page = raw.decode("utf-8")
+        if not page and not images:
+            raise ValueError("HTML 파일이나 이미지 URL이 필요해요")
+        pages[url] = {"html": page, "final_url": final, "image_urls": images}
+    return pages
+
+
 def main(argv=None, downloader=default_downloader, fetch=None):
     p = argparse.ArgumentParser(description="후보 페이지에서 레퍼런스 이미지만 수집한다")
     p.add_argument("urls", nargs="*", help="후보 페이지 URL")
@@ -369,11 +415,18 @@ def main(argv=None, downloader=default_downloader, fetch=None):
     p.add_argument("--max-per-page", type=int, default=20)
     p.add_argument("--max-tries", type=int, default=60, help="페이지당 다운로드 시도 상한")
     p.add_argument("--timeout", type=int, default=20)
-    p.add_argument("--no-playwright", action="store_true", help="엔진의 브라우저 폴백을 끈다(더 빠름)")
+    p.add_argument("--no-playwright", action="store_true", default=True, help="HTTP 전용이에요. 로컬 브라우저는 항상 꺼요")
+    p.add_argument("--browser-pages", help="browser_use의 HTML·공개 이미지 URL JSON 파일이에요")
     p.add_argument("--engine-dir", help="insane-search 스킬 디렉터리 (engine/ 패키지를 담은 곳)")
     args = p.parse_args(argv)
 
+    try:
+        args.browser_pages = read_browser_pages(args.browser_pages)
+    except (OSError, ValueError, TypeError) as exc:
+        p.error(f"브라우저 입력을 읽을 수 없어요: {exc}")
     targets = read_targets(args)
+    existing = {url for url, _ in targets}
+    targets.extend((url, "") for url in args.browser_pages if url not in existing)
     if not targets:
         print("URL이 없다 — 인자나 --urls-file로 넘긴다", file=sys.stderr)
         return 2

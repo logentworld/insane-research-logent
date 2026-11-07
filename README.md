@@ -8,6 +8,10 @@
 - 원본 README 원문: [`README.upstream.md`](README.upstream.md)
 - Logent 변경 내역: [`NOTICE`](NOTICE), [`docs/insane-research.md`](docs/insane-research.md)
 - 플러그인 id: `com.sleepysoong.logent.insane-research`
+- 설치는 Logent 0.0.84 이상이 필요해요.
+- `logent-plugin.json`이 명시적 key `sleepysoong:insane_research`와 dependencies의 단일 원천이에요.
+  서명 manifest는 같은 `key`와 필수 `requires: ["sleepysoong:browser_use"]`를 담아요.
+  key는 GitHub 계정·조직이나 Android id에서 추론하지 않아요.
 
 ## 무엇을 하나요
 
@@ -15,6 +19,13 @@
 검증 게이트를 통과한 보고서만 만들어요. `AskUserQuestion`·`Workflow` 대신 채팅 질문과
 Logent 서브에이전트(한 번에 3개, 총 6개, 각 8분)를 써요. 세션은 작업 디렉터리의
 `RESEARCH/` 아래에만 만들어요.
+
+API 4.0.0의 필수 공개 의존성 `browser_use` ego-browser로 DOM·탐색·입력을 수행해요.
+픽셀은 선택적 `computer_use`이며 별도 launch·MCP 설치는 필요 없어요.
+HTTP/curl/urllib·파일·refs 원본 이미지 다운로드는 유지해요. 선택적 엔진은
+`python3 -m engine "<URL>" --no-playwright`로 HTTP-only를 명시해요.
+브라우저 전체 원문을 직접 저장한 manifest만으로도 엔진 없이 snapshot을 완료할 수 있어요.
+[JSON 계약·공식 Node 예제·fresh install CLI·게이트 smoke fixture](docs/insane-research.md#브라우저-원문-manifest)를 참고해요.
 
 ## 구조
 

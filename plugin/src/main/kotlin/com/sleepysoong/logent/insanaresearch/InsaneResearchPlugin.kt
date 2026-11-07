@@ -28,11 +28,11 @@ class InsaneResearchPlugin : LogentPlugin {
     private val deepResearch = PluginTool(
         spec = toolSpec(
             name = "deep_research",
-            description = "insane-research 7단계 세션과 결정론적 검증 게이트를 실행한다. " +
-                "먼저 skill 도구로 insane-research 본문을 읽고 절차를 따라라. start는 새 세션을 만들고, " +
-                "status/resume/merge/snapshot/validate/verify/eval은 RESEARCH/<session> 세션을 다룬다. " +
-                "snapshot은 high-risk 출처 원문을 insane-search로 저장하고, validate·verify·eval 실패는 " +
-                "보고서 작성을 막는 오류다. 임의 명령 실행 도구가 아니므로 action과 session만 받는다.",
+            description = "insane-research 7단계 세션과 결정론적 검증 게이트를 실행해요. " +
+                "먼저 skill 도구로 insane-research 본문을 읽고 절차를 따라요. start는 새 세션을 만들고, " +
+                "status/resume/merge/snapshot/validate/verify/eval은 RESEARCH/<session> 세션을 다뤄요. " +
+                "snapshot은 HTTP 또는 browser_use가 저장한 high-risk 출처 원문을 모아요. " +
+                "browser_manifest에는 세션 기준 JSON 상대 경로를 넘겨요. validate·verify·eval 실패는 보고서 작성을 막아요.",
             required = listOf("action"),
         ) {
             stringProperty(
@@ -42,6 +42,7 @@ class InsaneResearchPlugin : LogentPlugin {
             )
             stringProperty("topic", "start에서 만들 리서치 주제. 300자 이하.")
             stringProperty("session", "RESEARCH 바로 아래의 세션 폴더 이름. 경로 구분자와 '..'는 거부한다.")
+            stringProperty("browser_manifest", "snapshot에서만 쓰는 브라우저 원문 manifest의 세션 기준 JSON 상대 경로예요.")
         },
         access = setOf(ToolAccess.WRITE),
         childVisible = false,

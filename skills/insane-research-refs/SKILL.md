@@ -11,7 +11,7 @@ description: 주제의 실제 페이지에서 큰 레퍼런스 이미지만 빠�
 
 ## Logent 실행 계약
 
-- 페이지 수집은 `termux_shell`로 `$HOME/.logent/plugins/insane-research/refs/collect_ref_images.py`를 실행해요. HTTPS URL만 허용하고 Playwright 폴백은 끈 채로 실행해요.
+- 페이지 수집은 `termux_shell`로 `$HOME/.logent/plugins/insane-research/refs/collect_ref_images.py`를 실행해요. HTTPS URL만 허용하고 로컬 Playwright는 옵션과 무관하게 항상 꺼요. DOM·탐색·입력은 필수 공개 의존성 `browser_use` ego-browser로 해요. 픽셀은 선택적 `computer_use`이며 필수 단계가 아니에요.
 - 후보 검색은 `web_search`를 쓰고, 서브에이전트는 띄우지 않아요.
 - 결과 이미지를 하나하나 모델 컨텍스트로 읽지 않아요. 호출한 쪽이 필요한 파일만 `file_read`로 확인해요.
 
@@ -36,10 +36,19 @@ description: 주제의 실제 페이지에서 큰 레퍼런스 이미지만 빠�
    python3 "$HOME/.logent/plugins/insane-research/refs/collect_ref_images.py" \
      --urls-file "{out}/targets.tsv" --out "{out}" --topic "{주제}" --no-playwright
    ```
-   페이지 HTML은 insane-search 엔진으로 받는다(설치돼 있으면 자동 탐색, 차단 우회는 그쪽 정본). 엔진이 없으면 단순 요청만 하고 막힌 페이지는 `blocked`로 남는다 — 여기서 우회 기법을 즉석으로 짜지 않는다. 서둘러야 하면 `--no-playwright`.
+   페이지 HTML은 선택적 insane-search의 HTTP 전용 경로로 받아요. 엔진이 없으면 curl/urllib로 요청하고 실패는 `blocked`로 남겨요. 브라우저가 필요하면 정식 `browser_use`에서 HTML이나 공개 이미지 URL을 저장하고 `--browser-pages "{out}/browser-pages.json"`으로 기존 수집 경로에 전달해요. 별도 launch·MCP 설치·일반 의존성 ensureReady 자동 실행은 하지 않아요.
 4. **보충 1회까지** — `ok` 페이지가 목표의 절반 미만이면, 막힌 도메인을 빼고 web_search 1회로 후보를 더 찾아 `targets.tsv`에 덧붙이고 같은 명령을 다시 실행한다(같은 `--out`, 결과는 전체 목록으로 다시 써진다). 그래도 부족하면 그대로 보고한다.
 5. **보고** — 아래 형식만. 이미지를 하나하나 `file_read`로 읽어 묘사하지 않아요(호출한 쪽이 필요한 것만 봐요).
 
+
+## 브라우저 입력 계약
+
+`--browser-pages`는 `{"pages":[{"url":"https://shop.example/item","final_url":"https://shop.example/item","html_path":"page.html","image_urls":["https://cdn.example/detail.jpg"]}]}` JSON을 받아요. `html_path`는 JSON 폴더 안의 UTF-8 HTML 상대 경로이고 최대 8 MiB예요. HTML과 `image_urls` 중 하나 이상이 필요해요. 원본·최종·이미지 URL은 공개 HTTPS여야 하고 중복 페이지·경로 이탈·잘못된 JSON은 CLI 오류로 거절해요. DOM의 `document.documentElement.outerHTML`을 runtime에서 파일로 직접 저장하거나 DOM에서 얻은 원본 공개 이미지 URL을 넣어요. 모델 요약이나 console 잘림 문자열은 넣지 않아요. JSON의 페이지는 URL 인자 없이도 수집 대상이 되고, 동일 URL의 HTTP 페이지 수집을 대체해요. 이미지 원본은 기존 HTTP/curl/urllib 다운로더로 받아 크기·형식 필터와 해시·목록 생성을 그대로 적용해요.
+
+```bash
+python3 "$HOME/.logent/plugins/insane-research/refs/collect_ref_images.py" \
+  --browser-pages "{out}/browser-pages.json" --out "{out}" --topic "{주제}"
+```
 ## 출력
 
 ```

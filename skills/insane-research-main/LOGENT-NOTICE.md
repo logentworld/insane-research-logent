@@ -14,6 +14,8 @@
 - `orchestrator.py`에 `init`·`resume`·`status`·`list` CLI를 추가했어요. 원본은 하드코딩된 주제만 실행했어요.
 - `verify_report.py`가 `outputs/*.md`뿐 아니라 `outputs/**/*.md`의 전체 보고서를 검사하도록 넓혔어요.
 - Logent의 `deep_research` 도구가 세션 시작·상태·재개·취합·스냅샷·검증·평가를 실행해요.
+- API 4.0.0의 필수 공개 의존성 `browser_use` ego-browser로 DOM·탐색·입력을 수행해요. 픽셀은 선택적 `computer_use`이고 별도 launch·MCP 설치는 하지 않아요.
+- snapshot browser manifest로 직접 저장한 전체 원문을 수입하고 엔진 없는 게이트 실행을 지원해요. refs의 `--browser-pages`는 저장 HTML·공개 이미지 URL을 기존 이미지 수집 경로로 전달해요. HTTP 엔진의 로컬 Playwright는 항상 꺼요.
 - 메인·쿼리·refs 스킬 본문은 APK 자산에서 읽고, Python 게이트 스크립트와 템플릿은 `~/.logent/plugins/insane-research/`에 배포해요.
 
 원본의 라이선스와 저작권 고지는 `LICENSE`에 그대로 보존했어요.

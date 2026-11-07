@@ -74,6 +74,8 @@ jobs:
       - name: API 계약을 로컬 Maven에 발행해요
         working-directory: api-src
         run: ./gradlew --no-daemon :plugin-api:publishToMavenLocal
+      - name: Python 회귀 도구를 설치해요
+        run: python3 -m pip install 'pytest>=8.4,<10'
       - name: 테스트와 lint를 실행해요
         run: ./scripts/test.sh -PlogentPluginApiMavenLocal=true
       - name: 서명 키를 준비해요
@@ -161,6 +163,9 @@ jobs:
             gh release edit edge --prerelease --notes "커밋 ${COMMIT:0:7}의 .lpg예요. $note"
           fi
           while IFS= read -r old; do
+            if [[ "$old" =~ ^logent-insane-research-v[0-9]+\.[0-9]+\.[0-9]+\.lpg$ || "$old" == SHA256SUMS ]]; then
+              continue
+            fi
             case "$old" in
               *.lpg|SHA256SUMS.edge|SHA256SUMS-edge-*.txt)
                 gh release delete-asset "$release" "$old" -y ;;
