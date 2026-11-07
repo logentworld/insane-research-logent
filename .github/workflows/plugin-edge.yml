@@ -35,7 +35,7 @@ jobs:
           echo "commit=$pin" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
-          repository: sleepysoong/logent-plugin-api
+          repository: logentworld/plugin
           ref: ${{ steps.api-pin.outputs.commit }}
           token: ${{ secrets.LOGENT_PLUGIN_API_TOKEN || github.token }}
           path: api-src
