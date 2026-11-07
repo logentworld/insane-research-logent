@@ -1,4 +1,4 @@
-package dev.logent.insanaresearch
+package com.sleepysoong.logent.insanaresearch
 
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -15,10 +15,10 @@ class InsaneResearchPluginTest {
         val plugin = InsaneResearchPlugin()
         val tool = plugin.tools().single()
 
-        assertEquals("dev.logent.insane-research", plugin.id)
+        assertEquals("com.sleepysoong.logent.insane-research", plugin.id)
         assertEquals(BuildConfig.PLUGIN_VERSION, plugin.version)
         assertEquals("deep_research", tool.name)
-        assertEquals(setOf(dev.logent.plugin.ToolAccess.WRITE), tool.access)
+        assertEquals(setOf(com.sleepysoong.logent.plugin.ToolAccess.WRITE), tool.access)
         assertFalse(tool.childVisible)
         assertFalse(tool.serialized)
 

@@ -1,15 +1,15 @@
-package dev.logent.insanaresearch
+package com.sleepysoong.logent.insanaresearch
 
-import dev.logent.plugin.LogentPlugin
-import dev.logent.plugin.PluginHost
-import dev.logent.plugin.PluginSkill
-import dev.logent.plugin.PluginSlashCommand
-import dev.logent.plugin.PluginTool
-import dev.logent.plugin.ToolAccess
-import dev.logent.plugin.ToolResult
-import dev.logent.plugin.stringProperty
-import dev.logent.plugin.toolSpec
-import dev.logent.plugin.text
+import com.sleepysoong.logent.plugin.LogentPlugin
+import com.sleepysoong.logent.plugin.PluginHost
+import com.sleepysoong.logent.plugin.PluginSkill
+import com.sleepysoong.logent.plugin.PluginSlashCommand
+import com.sleepysoong.logent.plugin.PluginTool
+import com.sleepysoong.logent.plugin.ToolAccess
+import com.sleepysoong.logent.plugin.ToolResult
+import com.sleepysoong.logent.plugin.stringProperty
+import com.sleepysoong.logent.plugin.toolSpec
+import com.sleepysoong.logent.plugin.text
 
 /**
  * insane-research 세션·검증 게이트 도구와 스킬 본문을 제공하는 플러그인이에요.
@@ -18,7 +18,7 @@ import dev.logent.plugin.text
  * APK 자산에서 바로 읽어요. 코어는 이 플러그인의 존재를 몰라도 `deep_research` 계약만으로 써요.
  */
 class InsaneResearchPlugin : LogentPlugin {
-    override val id: String = "dev.logent.insane-research"
+    override val id: String = "com.sleepysoong.logent.insane-research"
     override val name: String = "Insane Research"
     override val version: String = BuildConfig.PLUGIN_VERSION
 

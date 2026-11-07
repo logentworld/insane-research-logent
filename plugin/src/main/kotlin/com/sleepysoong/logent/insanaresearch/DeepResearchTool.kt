@@ -1,11 +1,11 @@
-package dev.logent.insanaresearch
+package com.sleepysoong.logent.insanaresearch
 
-import dev.logent.plugin.PluginContext
-import dev.logent.plugin.PluginHost
-import dev.logent.plugin.ProcessResult
-import dev.logent.plugin.ToolResult
-import dev.logent.plugin.shellQuote
-import dev.logent.plugin.text
+import com.sleepysoong.logent.plugin.PluginContext
+import com.sleepysoong.logent.plugin.PluginHost
+import com.sleepysoong.logent.plugin.ProcessResult
+import com.sleepysoong.logent.plugin.ToolResult
+import com.sleepysoong.logent.plugin.shellQuote
+import com.sleepysoong.logent.plugin.text
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonObject

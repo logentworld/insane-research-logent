@@ -1,8 +1,8 @@
-package dev.logent.insanaresearch
+package com.sleepysoong.logent.insanaresearch
 
-import dev.logent.plugin.PluginContext
-import dev.logent.plugin.ProcessResult
-import dev.logent.plugin.ToolResult
+import com.sleepysoong.logent.plugin.PluginContext
+import com.sleepysoong.logent.plugin.ProcessResult
+import com.sleepysoong.logent.plugin.ToolResult
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject

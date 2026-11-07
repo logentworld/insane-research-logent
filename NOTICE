@@ -12,7 +12,7 @@
 - `orchestrator.py`에 `init`·`resume`·`status`·`list` CLI를 추가했어요.
 - `verify_report.py`가 `outputs/*.md`뿐 아니라 `outputs/**/*.md`의 전체 보고서를 검사하도록 넓혔어요.
 - `snapshot_sources.py`와 `collect_ref_images.py`가 `~/.logent/plugins/insane-search/engine`을 먼저 찾고, 엔진 패키지 디렉터리를 `--engine-dir`로 받아들이며, Playwright 폴백을 끄고 refs는 HTTPS만 허용하도록 패치했어요.
-- `dev.logent.insane-research` 플러그인이 `deep_research` 도구와 스킬 세 개를 제공해요. 런타임 스크립트·템플릿은 `runtime.zip`으로 APK 자산에 넣고, `ensureReady`에서 `~/.logent/plugins/insane-research/{scripts,refs,templates}`에 staging·검증·원자 교체한 뒤 마지막에 `VERSION`을 기록해요.
+- `com.sleepysoong.logent.insane-research` 플러그인이 `deep_research` 도구와 스킬 세 개를 제공해요. 런타임 스크립트·템플릿은 `runtime.zip`으로 APK 자산에 넣고, `ensureReady`에서 `~/.logent/plugins/insane-research/{scripts,refs,templates}`에 staging·검증·원자 교체한 뒤 마지막에 `VERSION`을 기록해요.
 - `snapshot`은 `~/.logent/plugins/insane-search/engine`을 `--engine-dir`로 넘기고, 엔진이 없으면 `INSANE_SEARCH_ENGINE_MISSING`으로 명확히 실패해요.
 - 메인·쿼리·refs 스킬 본문은 `plugin/src/main/assets/plugins/insane-research/skills/`로 동기화돼 APK 자산에서 읽혀요.
 - `setup/setup.sh`, 업데이트 확인, GitHub star 질문, `.claude-plugin/`, `commands/`, `routing.json`, `README.*`, `assets/hero.png`는 앱에 넣지 않았어요. 리서치 동작과 무관하거나 Claude 플러그인 설치용이에요.

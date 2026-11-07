@@ -1,12 +1,12 @@
-package dev.logent.insanaresearch
+package com.sleepysoong.logent.insanaresearch
 
-import dev.logent.plugin.PluginHost
-import dev.logent.plugin.ProcessResult
+import com.sleepysoong.logent.plugin.PluginHost
+import com.sleepysoong.logent.plugin.ProcessResult
 
 /** 셸 명령과 출력을 그대로 붙잡아 두는 테스트 호스트예요. */
 internal class FakePluginHost(
     override val appVersion: String = "0.0.0-test",
-    override val apkPath: String = "/data/app/~~abc/dev.logent-1/base.apk",
+    override val apkPath: String = "/data/app/~~abc/com.sleepysoong.logent-1/base.apk",
 ) : PluginHost {
     val commands = mutableListOf<String>()
     val timeouts = mutableListOf<Int>()

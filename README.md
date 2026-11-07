@@ -7,7 +7,7 @@
 - 원본: `fivetaku/insane-research` v2.11.1 (`8f92b33d5d806a5437cc9e9d2e8b795ecc421315`, MIT)
 - 원본 README 원문: [`README.upstream.md`](README.upstream.md)
 - Logent 변경 내역: [`NOTICE`](NOTICE), [`docs/insane-research.md`](docs/insane-research.md)
-- 플러그인 id: `dev.logent.insane-research` (기존 설치와 같은 id를 유지해요)
+- 플러그인 id: `com.sleepysoong.logent.insane-research`
 
 ## 무엇을 하나요
 

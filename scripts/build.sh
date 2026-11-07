@@ -34,7 +34,7 @@ done
 # 콘텐츠 pack은 .lpg와 같은 키를 쓰지만 서명 domain과 manifest는 달라요.
 python3 scripts/content-pack.py sign \
     --source "$PWD/plugin/build/staged/pluginAssets/plugins/$id" \
-    --plugin "dev.logent.$id" --version "$version" --api-min 3 --api-max 3 \
+    --plugin "com.sleepysoong.logent.$id" --version "$version" --api-min 4 --api-max 4 \
     --key "$key" --public-key "$public" \
     --output "$dist/$name-v$version-content.zip"
 artifacts+=("$dist/$name-v$version-content.zip")
