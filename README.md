@@ -10,7 +10,7 @@
 - 플러그인 id: `com.sleepysoong.logent.insane-research`
 - 설치는 Logent 0.0.84 이상이 필요해요.
 - `logent-plugin.json`이 명시적 key `sleepysoong:insane_research`와 dependencies의 단일 원천이에요.
-  서명 manifest는 같은 `key`와 필수 `requires: ["sleepysoong:browser_use"]`를 담아요.
+  manifest는 같은 `key`와 필수 `requires: ["sleepysoong:browser_use"]`를 담아요.
   key는 GitHub 계정·조직이나 Android id에서 추론하지 않아요.
 
 ## 무엇을 하나요
@@ -35,7 +35,7 @@ skills/insane-research-query/  질문 설계 스킬
 skills/insane-research-refs/   참조 이미지 수집 스킬
 plugin/                        Logent Kotlin 플러그인과 deep_research 도구
 tests/python/                  Logent가 추가한 런타임 회귀 테스트
-scripts/                       검증·서명 .lpg·릴리스
+scripts/                       검증·`.lpg`·릴리스
 ```
 
 스킬 본문은 upstream과 같은 경로를 단일 원천으로 써요. `plugin/build.gradle.kts`가
@@ -51,13 +51,9 @@ Android SDK 37, JDK 21, Python 3.11 이상이 필요해요. API artifact는
 ```bash
 ./scripts/test.sh --python-only
 ./scripts/test.sh
-LOGENT_CONTENT_SIGNING_KEY_FILE="$HOME/.local/share/logent/content-signing.pem" \
-  ./scripts/build.sh
+./scripts/build.sh
 # build/dist/logent-insane-research-v<VERSION>.lpg
 ```
-
-서명 개인키는 저장소 밖에만 두고, APK에 고정된 ECDSA P-256 공개키와 맞는 패키지만
-설치돼요.
 
 ## upstream 업데이트
 

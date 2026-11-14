@@ -6,7 +6,7 @@ Logent는 [fivetaku/insane-research](https://github.com/fivetaku/insane-research
 리서치 세션·출처 등록·claim ledger·원문 대조·보고서 게이트를 `deep_research` 도구가 맡아요.
 
 설치는 Logent 0.0.84 이상이 필요해요. `logent-plugin.json`의 명시적 key
-`sleepysoong:insane_research`와 dependencies가 단일 원천이며, 서명 manifest는
+`sleepysoong:insane_research`와 dependencies가 단일 원천이며, manifest는
 같은 `key`와 `requires: ["sleepysoong:browser_use"]`를 담아요.
 key는 GitHub 계정·조직·Android id에서 추론하지 않아요. 픽셀 `computer_use`는
 선택 기능이고 필수 dependency에는 넣지 않아요.
