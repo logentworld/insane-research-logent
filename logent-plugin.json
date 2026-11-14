@@ -3,7 +3,7 @@
   "key": "sleepysoong:insane_research",
   "name": "Insane Research",
   "entry": "com.sleepysoong.logent.insanaresearch.InsaneResearchPlugin",
-  "dependencies": ["sleepysoong:browser_use"],
+  "dependencies": [],
   "apiMin": 4,
   "apiMax": 4
 }

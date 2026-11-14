@@ -2,13 +2,13 @@
 
 Logent는 [fivetaku/insane-research](https://github.com/fivetaku/insane-research) 2.11.1
 (커밋 `8f92b33d5d806a5437cc9e9d2e8b795ecc421315`, MIT)의 7단계 리서치 스킬을 기본 내장해요.
-검색·페이지 읽기는 `web_search`·`web_fetch`·HTTP/curl/urllib와 필수 공개 의존성 `browser_use`를 써요.
+검색·페이지 읽기는 `web_search`·`web_fetch`·HTTP/curl/urllib와 코어 내장 `browser_use`를 써요.
 리서치 세션·출처 등록·claim ledger·원문 대조·보고서 게이트를 `deep_research` 도구가 맡아요.
 
 설치는 Logent 0.0.84 이상이 필요해요. `logent-plugin.json`의 명시적 key
 `sleepysoong:insane_research`와 dependencies가 단일 원천이며, manifest는
-같은 `key`와 `requires: ["sleepysoong:browser_use"]`를 담아요.
-key는 GitHub 계정·조직·Android id에서 추론하지 않아요. 픽셀 `computer_use`는
+같은 `key`를 담고, `browser_use`는 코어 내장이라 `requires`가 없어요.
+key는 GitHub 계정·조직·Android id에서 추론하지 않아요. 픽셀 `computer_use`도 코어 내장이고
 선택 기능이고 필수 dependency에는 넣지 않아요.
 
 ## 구성
