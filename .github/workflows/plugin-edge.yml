@@ -3,7 +3,7 @@ name: 커밋마다 .lpg 빌드
 on:
   push:
     branches: [main, logent]
-    tags: ['v*']
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
@@ -47,10 +47,10 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: "21"
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - name: Android SDK를 설치해요
         run: |
           sdk_tools="${ANDROID_HOME:-/usr/local/lib/android/sdk}/cmdline-tools"
